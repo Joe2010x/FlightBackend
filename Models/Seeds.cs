@@ -8,7 +8,7 @@ public static class Seeds
 {
     public static void Initialize (FlightContext context)
     {
-        var fileName = "data.json";
+        var fileName = "data/data.json";
         var incoming = new List<Flight>();
         using (StreamReader r = new StreamReader(fileName))
         {
