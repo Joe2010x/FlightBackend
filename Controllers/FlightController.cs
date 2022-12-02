@@ -103,11 +103,13 @@ namespace FlightApi.Controllers
         //Flight query with date
         [HttpPost]
         public async Task<ActionResult<IEnumerable<Flight>>> FindFlight(FlightDataRequestDTO flightData) {
-            Console.WriteLine(flightData.departureCity);
-            Console.WriteLine(flightData.arrivalCity);
-            Console.WriteLine(flightData.departureDate.Date);
+            // Console.WriteLine(flightData.departureCity);
+            // Console.WriteLine(flightData.arrivalCity);
+            // Console.WriteLine(flightData.departureDate.Date);
 
             var result = _context.Flights
+                .Include(f=> f.itineraries!)
+                .ThenInclude(i => i.prices)
                 .Select( f => new Flight() {
                     Id = f.Id,
                     flight_id = f.flight_id,
@@ -115,7 +117,8 @@ namespace FlightApi.Controllers
                     arrivalDestination = f.arrivalDestination,
                     itineraries = f.itineraries!
                         .Where(i => 
-                            i.departureAt.Date == flightData.departureDate.Date).ToList()
+                            i.departureAt.Date == flightData.departureDate.Date)
+                        .ToList()
                 })
                 .Where(f => 
                     f.departureDestination == flightData.departureCity &&
