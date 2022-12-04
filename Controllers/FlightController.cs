@@ -36,76 +36,44 @@ namespace FlightApi.Controllers
                 .ToListAsync();
         }
 
-        // GET: api/Flight/5
-        // [HttpGet("{id}")]
-        // public async Task<ActionResult<Flight>> GetFlight(long id)
-        // {
-        //   if (_context.Flights == null)
-        //   {
-        //       return NotFound();
-        //   }
-        //     var flight = await _context.Flights.FindAsync(id);
+        [HttpPut]
+        public async Task<IActionResult> PutFlight(FlightPutRequestDTO flightInfo)
+        {
+            var itinerary = new Itinerary();
+            var flights = _context.Flights
+                .Include(f=> f.itineraries!)
+                .ThenInclude(i => i.prices);
 
-        //     if (flight == null)
-        //     {
-        //         return NotFound();
-        //     }
+            var flight = flights.First(f => f.flight_id == flightInfo.flight_id);
+            flight.itineraries!.ForEach(i => {
+                var compareResult = DateTime.Compare(i.departureAt, flightInfo.departureDateTime);
 
-        //     return flight;
-        // }
+                if (compareResult == 0)
+                    {
+                        i.avaliableSeats -= flightInfo.numSeats;
+                        itinerary = i;
+                        Console.WriteLine("itinerary found");
+                        }
+                });
+        
+             _context.Entry(itinerary).State = EntityState.Modified;
 
-        // PUT: api/Flight/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        // [HttpPut("{id}")]
-        // public async Task<IActionResult> PutFlight(long id, Flight flight)
-        // {
-        //     if (id != flight.Id)
-        //     {
-        //         return BadRequest();
-        //     }
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
 
-        //     _context.Entry(flight).State = EntityState.Modified;
+                    throw;   
+            }
 
-        //     try
-        //     {
-        //         await _context.SaveChangesAsync();
-        //     }
-        //     catch (DbUpdateConcurrencyException)
-        //     {
-        //         if (!FlightExists(id))
-        //         {
-        //             return NotFound();
-        //         }
-        //         else
-        //         {
-        //             throw;
-        //         }
-        //     }
-
-        //     return NoContent();
-        // }
-
-        // POST: api/Flight
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        // [HttpPost]
-        // public async Task<ActionResult<Flight>> PostFlight(Flight flight)
-        // {
-        //   if (_context.Flights == null)
-        //   {
-        //       return Problem("Entity set 'FlightContext.Flights'  is null.");
-        //   }
-        //     _context.Flights.Add(flight);
-        //     await _context.SaveChangesAsync();
-
-        //     return CreatedAtAction("GetFlight", new { id = flight.Id }, flight);
-        // }
+            return NoContent();
+        }
 
         //Flight query with date
         [HttpPost]
         public async Task<ActionResult<IEnumerable<Flight>>> FindFlight(FlightDataRequestDTO flightData) {
-            // Console.WriteLine(flightData.departureCity);
-            // Console.WriteLine(flightData.arrivalCity);
-            // Console.WriteLine(flightData.departureDate.Date);
 
             var result = _context.Flights
                 .Include(f=> f.itineraries!)
@@ -126,26 +94,6 @@ namespace FlightApi.Controllers
                 .ToListAsync();
             return await result;
         }
-
-        // DELETE: api/Flight/5
-        // [HttpDelete("{id}")]
-        // public async Task<IActionResult> DeleteFlight(long id)
-        // {
-        //     if (_context.Flights == null)
-        //     {
-        //         return NotFound();
-        //     }
-        //     var flight = await _context.Flights.FindAsync(id);
-        //     if (flight == null)
-        //     {
-        //         return NotFound();
-        //     }
-
-        //     _context.Flights.Remove(flight);
-        //     await _context.SaveChangesAsync();
-
-        //     return NoContent();
-        // }
 
         private bool FlightExists(long id)
         {
